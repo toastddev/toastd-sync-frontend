@@ -31,3 +31,94 @@ body {
 .Polaris-Frame {
   min-height: 100vh;
 }
+
+/* ──────────────────────────────────────────────────────────────────────────
+   Dark theme overrides
+   Polaris 13's experimental dark theme uses warm-toned neutrals (slightly
+   brown). Replace the surface/background/border tokens with cool near-blacks
+   for a true "dark" feel similar to GitHub / VS Code Dark+.
+   ────────────────────────────────────────────────────────────────────────── */
+:root.p-theme-dark-experimental,
+.p-theme-dark-experimental {
+  /* Page + frame backgrounds */
+  --p-color-bg: #0d1117;
+  --p-color-bg-surface: #0d1117;
+  --p-color-bg-surface-secondary: #161b22;
+  --p-color-bg-surface-tertiary: #1c2128;
+  --p-color-bg-surface-secondary-hover: #1c2128;
+  --p-color-bg-surface-secondary-active: #21262d;
+  --p-color-bg-surface-tertiary-hover: #21262d;
+  --p-color-bg-surface-tertiary-active: #2d333b;
+  --p-color-bg-surface-hover: #161b22;
+  --p-color-bg-surface-active: #1c2128;
+  --p-color-bg-surface-selected: #1c2128;
+  --p-color-bg-surface-brand: #1f2937;
+  --p-color-bg-surface-brand-hover: #273345;
+  --p-color-bg-surface-brand-active: #2f3e54;
+  --p-color-bg-surface-brand-selected: #273345;
+  --p-color-bg-surface-emphasis: #1c2128;
+  --p-color-bg-surface-emphasis-hover: #21262d;
+  --p-color-bg-surface-emphasis-active: #2d333b;
+  --p-color-bg-surface-inverse: #f6f8fa;
+
+  /* Inputs and fills */
+  --p-color-bg-fill: #161b22;
+  --p-color-bg-fill-hover: #1c2128;
+  --p-color-bg-fill-active: #21262d;
+  --p-color-bg-fill-secondary: #1c2128;
+  --p-color-bg-fill-secondary-hover: #21262d;
+  --p-color-bg-fill-secondary-active: #2d333b;
+  --p-color-bg-fill-tertiary: #21262d;
+  --p-color-bg-fill-tertiary-hover: #2d333b;
+  --p-color-bg-fill-tertiary-active: #373e47;
+  --p-color-input-bg-surface: #0d1117;
+  --p-color-input-bg-surface-hover: #161b22;
+  --p-color-input-bg-surface-active: #1c2128;
+
+  /* Borders */
+  --p-color-border: #30363d;
+  --p-color-border-hover: #3d444c;
+  --p-color-border-secondary: #21262d;
+  --p-color-border-tertiary: #1c2128;
+  --p-color-border-focus: #58a6ff;
+  --p-color-border-disabled: #21262d;
+  --p-color-border-emphasis: #6e7681;
+  --p-color-border-input: #30363d;
+  --p-color-border-input-hover: #484f58;
+
+  /* Text */
+  --p-color-text: #e6edf3;
+  --p-color-text-secondary: #9da7b3;
+  --p-color-text-disabled: #484f58;
+  --p-color-text-inverse: #0d1117;
+  --p-color-text-emphasis: #58a6ff;
+  --p-color-text-brand: #58a6ff;
+  --p-color-text-brand-hover: #79b8ff;
+  --p-color-text-brand-on-bg-fill: #ffffff;
+
+  /* Icon colors */
+  --p-color-icon: #c9d1d9;
+  --p-color-icon-secondary: #8b949e;
+  --p-color-icon-disabled: #484f58;
+  --p-color-icon-inverse: #0d1117;
+  --p-color-icon-emphasis: #58a6ff;
+  --p-color-icon-brand: #58a6ff;
+}
+
+/* Polaris's TopBar / Frame have their own background tokens — pin them too. */
+:root.p-theme-dark-experimental .Polaris-TopBar,
+.p-theme-dark-experimental .Polaris-TopBar {
+  background-color: #161b22;
+  border-bottom: 1px solid #30363d;
+}
+
+:root.p-theme-dark-experimental .Polaris-Navigation,
+.p-theme-dark-experimental .Polaris-Navigation {
+  background-color: #0d1117;
+  border-right: 1px solid #21262d;
+}
+
+:root.p-theme-dark-experimental .Polaris-Frame__Main,
+.p-theme-dark-experimental .Polaris-Frame__Main {
+  background-color: #0d1117;
+}
