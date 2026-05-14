@@ -1,0 +1,33 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+/* Defer all colour decisions to Polaris tokens so dark mode works without overrides. */
+html,
+body {
+  background-color: var(--p-color-bg-surface, #f6f6f7);
+  color: var(--p-color-text, #303030);
+  font-family: var(
+    --p-font-family-sans,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Roboto,
+    "Helvetica Neue",
+    Arial,
+    sans-serif
+  );
+  margin: 0;
+}
+
+/* Polaris Frame's TopBar already provides a header — make sure the app shell
+   doesn't double-scroll on mobile when the viewport shrinks. */
+.Polaris-Frame {
+  min-height: 100vh;
+}
