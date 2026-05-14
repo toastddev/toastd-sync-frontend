@@ -26,99 +26,287 @@ body {
   margin: 0;
 }
 
-/* Polaris Frame's TopBar already provides a header — make sure the app shell
-   doesn't double-scroll on mobile when the viewport shrinks. */
 .Polaris-Frame {
   min-height: 100vh;
 }
 
 /* ──────────────────────────────────────────────────────────────────────────
-   Dark theme overrides
-   Polaris 13's experimental dark theme uses warm-toned neutrals (slightly
-   brown). Replace the surface/background/border tokens with cool near-blacks
-   for a true "dark" feel similar to GitHub / VS Code Dark+.
+   Dark theme — neutral gray palette
+   Polaris 13's experimental dark theme has gaps: many hover/active states
+   fall back to light-mode tokens, producing white-on-white text. We override
+   the full token set with pure neutral grays (no warm or cool tint) and pin
+   the offending component states directly.
    ────────────────────────────────────────────────────────────────────────── */
+
 :root.p-theme-dark-experimental,
 .p-theme-dark-experimental {
-  /* Page + frame backgrounds */
-  --p-color-bg: #0d1117;
-  --p-color-bg-surface: #0d1117;
-  --p-color-bg-surface-secondary: #161b22;
-  --p-color-bg-surface-tertiary: #1c2128;
-  --p-color-bg-surface-secondary-hover: #1c2128;
-  --p-color-bg-surface-secondary-active: #21262d;
-  --p-color-bg-surface-tertiary-hover: #21262d;
-  --p-color-bg-surface-tertiary-active: #2d333b;
-  --p-color-bg-surface-hover: #161b22;
-  --p-color-bg-surface-active: #1c2128;
-  --p-color-bg-surface-selected: #1c2128;
-  --p-color-bg-surface-brand: #1f2937;
-  --p-color-bg-surface-brand-hover: #273345;
-  --p-color-bg-surface-brand-active: #2f3e54;
-  --p-color-bg-surface-brand-selected: #273345;
-  --p-color-bg-surface-emphasis: #1c2128;
-  --p-color-bg-surface-emphasis-hover: #21262d;
-  --p-color-bg-surface-emphasis-active: #2d333b;
-  --p-color-bg-surface-inverse: #f6f8fa;
+  /* ── Surfaces / backgrounds (zinc-950 → zinc-700) ── */
+  --p-color-bg: #0a0a0a;
+  --p-color-bg-surface: #0a0a0a;
+  --p-color-bg-surface-hover: #18181b;
+  --p-color-bg-surface-active: #27272a;
+  --p-color-bg-surface-selected: #27272a;
+  --p-color-bg-surface-disabled: #18181b;
 
-  /* Inputs and fills */
-  --p-color-bg-fill: #161b22;
-  --p-color-bg-fill-hover: #1c2128;
-  --p-color-bg-fill-active: #21262d;
-  --p-color-bg-fill-secondary: #1c2128;
-  --p-color-bg-fill-secondary-hover: #21262d;
-  --p-color-bg-fill-secondary-active: #2d333b;
-  --p-color-bg-fill-tertiary: #21262d;
-  --p-color-bg-fill-tertiary-hover: #2d333b;
-  --p-color-bg-fill-tertiary-active: #373e47;
-  --p-color-input-bg-surface: #0d1117;
-  --p-color-input-bg-surface-hover: #161b22;
-  --p-color-input-bg-surface-active: #1c2128;
+  --p-color-bg-surface-secondary: #18181b;
+  --p-color-bg-surface-secondary-hover: #27272a;
+  --p-color-bg-surface-secondary-active: #3f3f46;
+  --p-color-bg-surface-secondary-selected: #27272a;
 
-  /* Borders */
-  --p-color-border: #30363d;
-  --p-color-border-hover: #3d444c;
-  --p-color-border-secondary: #21262d;
-  --p-color-border-tertiary: #1c2128;
-  --p-color-border-focus: #58a6ff;
-  --p-color-border-disabled: #21262d;
-  --p-color-border-emphasis: #6e7681;
-  --p-color-border-input: #30363d;
-  --p-color-border-input-hover: #484f58;
+  --p-color-bg-surface-tertiary: #27272a;
+  --p-color-bg-surface-tertiary-hover: #3f3f46;
+  --p-color-bg-surface-tertiary-active: #52525b;
 
-  /* Text */
-  --p-color-text: #e6edf3;
-  --p-color-text-secondary: #9da7b3;
-  --p-color-text-disabled: #484f58;
-  --p-color-text-inverse: #0d1117;
-  --p-color-text-emphasis: #58a6ff;
-  --p-color-text-brand: #58a6ff;
-  --p-color-text-brand-hover: #79b8ff;
-  --p-color-text-brand-on-bg-fill: #ffffff;
+  --p-color-bg-surface-brand: #27272a;
+  --p-color-bg-surface-brand-hover: #3f3f46;
+  --p-color-bg-surface-brand-active: #52525b;
+  --p-color-bg-surface-brand-selected: #3f3f46;
 
-  /* Icon colors */
-  --p-color-icon: #c9d1d9;
-  --p-color-icon-secondary: #8b949e;
-  --p-color-icon-disabled: #484f58;
-  --p-color-icon-inverse: #0d1117;
-  --p-color-icon-emphasis: #58a6ff;
-  --p-color-icon-brand: #58a6ff;
+  --p-color-bg-surface-emphasis: #27272a;
+  --p-color-bg-surface-emphasis-hover: #3f3f46;
+  --p-color-bg-surface-emphasis-active: #52525b;
+
+  --p-color-bg-surface-inverse: #fafafa;
+  --p-color-bg-surface-success: #14532d;
+  --p-color-bg-surface-warning: #422006;
+  --p-color-bg-surface-critical: #450a0a;
+  --p-color-bg-surface-info: #1e293b;
+
+  /* ── Fills (used by buttons, chips, etc.) ── */
+  --p-color-bg-fill: #27272a;
+  --p-color-bg-fill-hover: #3f3f46;
+  --p-color-bg-fill-active: #52525b;
+  --p-color-bg-fill-selected: #3f3f46;
+  --p-color-bg-fill-disabled: #18181b;
+
+  --p-color-bg-fill-secondary: #18181b;
+  --p-color-bg-fill-secondary-hover: #27272a;
+  --p-color-bg-fill-secondary-active: #3f3f46;
+
+  --p-color-bg-fill-tertiary: #27272a;
+  --p-color-bg-fill-tertiary-hover: #3f3f46;
+  --p-color-bg-fill-tertiary-active: #52525b;
+
+  --p-color-bg-fill-transparent: transparent;
+  --p-color-bg-fill-transparent-hover: rgba(255, 255, 255, 0.06);
+  --p-color-bg-fill-transparent-active: rgba(255, 255, 255, 0.1);
+  --p-color-bg-fill-transparent-selected: rgba(255, 255, 255, 0.08);
+
+  --p-color-bg-fill-brand: #e4e4e7;
+  --p-color-bg-fill-brand-hover: #f4f4f5;
+  --p-color-bg-fill-brand-active: #fafafa;
+  --p-color-bg-fill-brand-selected: #f4f4f5;
+  --p-color-bg-fill-brand-disabled: #3f3f46;
+
+  --p-color-bg-fill-inverse: #fafafa;
+  --p-color-bg-fill-inverse-hover: #e4e4e7;
+  --p-color-bg-fill-inverse-active: #d4d4d8;
+
+  /* ── Inputs ── */
+  --p-color-input-bg-surface: #18181b;
+  --p-color-input-bg-surface-hover: #27272a;
+  --p-color-input-bg-surface-active: #27272a;
+  --p-color-bg-input: #18181b;
+  --p-color-bg-input-hover: #27272a;
+  --p-color-bg-input-active: #27272a;
+
+  /* ── Borders ── */
+  --p-color-border: #3f3f46;
+  --p-color-border-hover: #52525b;
+  --p-color-border-secondary: #27272a;
+  --p-color-border-secondary-hover: #3f3f46;
+  --p-color-border-tertiary: #27272a;
+  --p-color-border-focus: #a1a1aa;
+  --p-color-border-disabled: #27272a;
+  --p-color-border-emphasis: #71717a;
+  --p-color-border-emphasis-hover: #a1a1aa;
+  --p-color-border-input: #3f3f46;
+  --p-color-border-input-hover: #52525b;
+  --p-color-border-brand: #71717a;
+
+  /* ── Text ── */
+  --p-color-text: #fafafa;
+  --p-color-text-hover: #ffffff;
+  --p-color-text-secondary: #a1a1aa;
+  --p-color-text-secondary-hover: #d4d4d8;
+  --p-color-text-disabled: #52525b;
+  --p-color-text-inverse: #0a0a0a;
+  --p-color-text-inverse-secondary: #27272a;
+  --p-color-text-emphasis: #fafafa;
+  --p-color-text-emphasis-hover: #ffffff;
+  --p-color-text-brand: #fafafa;
+  --p-color-text-brand-hover: #ffffff;
+  --p-color-text-brand-on-bg-fill: #0a0a0a;
+  --p-color-text-brand-on-bg-fill-hover: #0a0a0a;
+  --p-color-text-link: #d4d4d8;
+  --p-color-text-link-hover: #fafafa;
+
+  /* ── Icons ── */
+  --p-color-icon: #d4d4d8;
+  --p-color-icon-hover: #fafafa;
+  --p-color-icon-secondary: #a1a1aa;
+  --p-color-icon-secondary-hover: #d4d4d8;
+  --p-color-icon-disabled: #52525b;
+  --p-color-icon-inverse: #0a0a0a;
+  --p-color-icon-emphasis: #fafafa;
+  --p-color-icon-brand: #fafafa;
 }
 
-/* Polaris's TopBar / Frame have their own background tokens — pin them too. */
-:root.p-theme-dark-experimental .Polaris-TopBar,
-.p-theme-dark-experimental .Polaris-TopBar {
-  background-color: #161b22;
-  border-bottom: 1px solid #30363d;
+/* ──────────────────────────────────────────────────────────────────────────
+   Component-level dark-mode pins
+   Polaris ships some hardcoded white backgrounds on hover/active states that
+   ignore the token overrides above. Force those down explicitly.
+   ────────────────────────────────────────────────────────────────────────── */
+
+.p-theme-dark-experimental .Polaris-TopBar,
+:root.p-theme-dark-experimental .Polaris-TopBar {
+  background-color: #18181b;
+  border-bottom: 1px solid #3f3f46;
 }
 
-:root.p-theme-dark-experimental .Polaris-Navigation,
-.p-theme-dark-experimental .Polaris-Navigation {
-  background-color: #0d1117;
-  border-right: 1px solid #21262d;
+.p-theme-dark-experimental .Polaris-Navigation,
+:root.p-theme-dark-experimental .Polaris-Navigation {
+  background-color: #0a0a0a;
+  border-right: 1px solid #27272a;
 }
 
-:root.p-theme-dark-experimental .Polaris-Frame__Main,
-.p-theme-dark-experimental .Polaris-Frame__Main {
-  background-color: #0d1117;
+.p-theme-dark-experimental .Polaris-Frame__Main,
+:root.p-theme-dark-experimental .Polaris-Frame__Main {
+  background-color: #0a0a0a;
+}
+
+/* Cards and surfaces */
+.p-theme-dark-experimental .Polaris-LegacyCard,
+.p-theme-dark-experimental .Polaris-Card,
+.p-theme-dark-experimental .Polaris-Box {
+  background-color: #18181b;
+}
+
+/* TextField — the one with the worst white-on-active behaviour */
+.p-theme-dark-experimental .Polaris-TextField,
+.p-theme-dark-experimental .Polaris-TextField__Backdrop,
+.p-theme-dark-experimental .Polaris-Select,
+.p-theme-dark-experimental .Polaris-Select__Backdrop {
+  background-color: #18181b !important;
+  color: #fafafa !important;
+  border-color: #3f3f46 !important;
+}
+.p-theme-dark-experimental .Polaris-TextField:hover .Polaris-TextField__Backdrop,
+.p-theme-dark-experimental .Polaris-TextField:focus-within .Polaris-TextField__Backdrop,
+.p-theme-dark-experimental .Polaris-Select:hover .Polaris-Select__Backdrop {
+  background-color: #27272a !important;
+  border-color: #52525b !important;
+}
+.p-theme-dark-experimental .Polaris-TextField__Input,
+.p-theme-dark-experimental .Polaris-Select__SelectedOption {
+  color: #fafafa !important;
+  background-color: transparent !important;
+}
+.p-theme-dark-experimental .Polaris-TextField__Input::placeholder {
+  color: #71717a !important;
+}
+
+/* Buttons — fix the secondary/plain variants that go white on hover */
+.p-theme-dark-experimental .Polaris-Button {
+  background-color: #27272a;
+  color: #fafafa;
+  border-color: #3f3f46;
+}
+.p-theme-dark-experimental .Polaris-Button:hover {
+  background-color: #3f3f46;
+  color: #ffffff;
+  border-color: #52525b;
+}
+.p-theme-dark-experimental .Polaris-Button:active,
+.p-theme-dark-experimental .Polaris-Button.Polaris-Button--pressed {
+  background-color: #52525b;
+  color: #ffffff;
+}
+.p-theme-dark-experimental .Polaris-Button--variantPlain {
+  background-color: transparent;
+  color: #d4d4d8;
+}
+.p-theme-dark-experimental .Polaris-Button--variantPlain:hover {
+  background-color: rgba(255, 255, 255, 0.08);
+  color: #fafafa;
+}
+/* Primary stays light (inverted) for emphasis */
+.p-theme-dark-experimental .Polaris-Button--variantPrimary {
+  background-color: #fafafa;
+  color: #0a0a0a;
+  border-color: #fafafa;
+}
+.p-theme-dark-experimental .Polaris-Button--variantPrimary:hover {
+  background-color: #e4e4e7;
+  color: #0a0a0a;
+}
+
+/* ActionList / popovers — common white-on-hover offender */
+.p-theme-dark-experimental .Polaris-ActionList__Item,
+.p-theme-dark-experimental .Polaris-OptionList-Option,
+.p-theme-dark-experimental .Polaris-Listbox__Option {
+  background-color: transparent;
+  color: #fafafa;
+}
+.p-theme-dark-experimental .Polaris-ActionList__Item:hover,
+.p-theme-dark-experimental .Polaris-OptionList-Option:hover,
+.p-theme-dark-experimental .Polaris-Listbox__Option--focused,
+.p-theme-dark-experimental .Polaris-ActionList__Item--active {
+  background-color: #27272a !important;
+  color: #ffffff !important;
+}
+.p-theme-dark-experimental .Polaris-Popover__Content,
+.p-theme-dark-experimental .Polaris-PositionedOverlay {
+  background-color: #18181b;
+  border: 1px solid #3f3f46;
+  color: #fafafa;
+}
+
+/* Navigation list items */
+.p-theme-dark-experimental .Polaris-Navigation__Item {
+  color: #d4d4d8;
+}
+.p-theme-dark-experimental .Polaris-Navigation__Item:hover {
+  background-color: #18181b;
+  color: #fafafa;
+}
+.p-theme-dark-experimental .Polaris-Navigation__Item--selected {
+  background-color: #27272a;
+  color: #ffffff;
+}
+
+/* Tables */
+.p-theme-dark-experimental .Polaris-IndexTable,
+.p-theme-dark-experimental .Polaris-DataTable {
+  background-color: #18181b;
+  color: #fafafa;
+}
+.p-theme-dark-experimental .Polaris-IndexTable__TableRow:hover,
+.p-theme-dark-experimental .Polaris-DataTable__TableRow:hover {
+  background-color: #27272a;
+}
+.p-theme-dark-experimental .Polaris-IndexTable__TableRow--selected {
+  background-color: #3f3f46;
+}
+
+/* Tooltips and banners */
+.p-theme-dark-experimental .Polaris-Tooltip__TooltipContainer {
+  background-color: #27272a;
+  color: #fafafa;
+}
+.p-theme-dark-experimental .Polaris-Banner {
+  background-color: #18181b;
+  border-color: #3f3f46;
+  color: #fafafa;
+}
+
+/* Modal */
+.p-theme-dark-experimental .Polaris-Modal-Dialog__Modal {
+  background-color: #18181b;
+  color: #fafafa;
+}
+.p-theme-dark-experimental .Polaris-Modal-Header,
+.p-theme-dark-experimental .Polaris-Modal-Footer {
+  background-color: #18181b;
+  border-color: #27272a;
 }
