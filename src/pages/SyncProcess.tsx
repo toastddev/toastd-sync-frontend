@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Badge,
   Banner,
@@ -28,6 +29,7 @@ function statusTone(s?: string | null): Tone {
 }
 
 export default function SyncProcess() {
+  const nav = useNavigate();
   const [settings, setSettings] = useState<any>(null);
   const [vendors, setVendors] = useState<any[]>([]);
   const [job, setJob] = useState<any>(null);
@@ -304,7 +306,7 @@ export default function SyncProcess() {
                 {eligible.length === 0 ? (
                   <EmptyState
                     heading="No sync-eligible vendors yet"
-                    action={{ content: "Open Vendors tab", url: "/vendors" }}
+                    action={{ content: "Open Vendors tab", onAction: () => nav("/vendors") }}
                     image=""
                   >
                     <p>Go to Vendors and click Refresh to pull approved vendors from ShipTurtle.</p>

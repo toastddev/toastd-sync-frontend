@@ -26,8 +26,7 @@ export default function App() {
           </RequireAuth>
         }
       >
-        <Route index element={<Navigate to="/sync" replace />} />
-        <Route path="sync" element={<SyncProcess />} />
+        <Route index element={<SyncProcess />} />
         <Route path="vendors" element={<Vendors />} />
         <Route path="vendors/:id" element={<VendorProducts />} />
         <Route path="settings" element={<Settings />} />
