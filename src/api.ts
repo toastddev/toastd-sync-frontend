@@ -1,6 +1,11 @@
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8787";
 const TOKEN_KEY = "tvs_token";
 
+// When the SPA is mounted under a sub-path (e.g. /sync inside admin),
+// `import.meta.env.BASE_URL` is "/sync/". Use it as the prefix for full-page
+// redirects so we don't accidentally escape the embed.
+const BASE_PATH = (import.meta.env.BASE_URL ?? "/").replace(/\/$/, "") || "";
+
 export const auth = {
   get token(): string | null {
     return localStorage.getItem(TOKEN_KEY);
@@ -14,7 +19,7 @@ export const auth = {
   },
   logout() {
     auth.token = null;
-    location.href = "/login";
+    location.href = `${BASE_PATH}/login`;
   },
 };
 
@@ -34,7 +39,7 @@ async function request<T = any>(path: string, init: RequestInit = {}): Promise<T
   try { payload = text ? JSON.parse(text) : null; } catch { payload = text; }
   if (res.status === 401 && path !== "/api/auth/login") {
     auth.token = null;
-    location.href = "/login";
+    location.href = `${BASE_PATH}/login`;
   }
   if (!res.ok) throw new ApiError(res.status, payload);
   return payload as T;

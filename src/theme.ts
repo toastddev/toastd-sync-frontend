@@ -15,9 +15,26 @@ export function getInitialColorScheme(): ColorScheme {
 
 export function applyColorScheme(scheme: ColorScheme) {
   if (typeof document === "undefined") return;
-  // Polaris 13 reads this attribute on <html> to switch token values.
-  document.documentElement.setAttribute("data-color-scheme", scheme);
-  document.documentElement.style.colorScheme = scheme;
+  // Polaris 13 dark mode is class-gated, not attribute-gated. The stylesheet
+  // defines `.p-theme-light` (default :root) and `.p-theme-dark-experimental`
+  // selectors holding the actual CSS custom properties — swap them on <html>.
+  const root = document.documentElement;
+  const body = document.body;
+  if (scheme === "dark") {
+    root.classList.add("p-theme-dark-experimental");
+    root.classList.remove("p-theme-light");
+    body?.classList.add("p-theme-dark-experimental");
+    body?.classList.remove("p-theme-light");
+  } else {
+    root.classList.add("p-theme-light");
+    root.classList.remove("p-theme-dark-experimental");
+    body?.classList.add("p-theme-light");
+    body?.classList.remove("p-theme-dark-experimental");
+  }
+  // Mirror to color-scheme so native form controls / scrollbars follow suit.
+  root.style.colorScheme = scheme;
+  // Kept for our own CSS bridge if anyone wants to target it.
+  root.setAttribute("data-color-scheme", scheme);
 }
 
 export const ThemeContext = createContext<{

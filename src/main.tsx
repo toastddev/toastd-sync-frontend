@@ -8,6 +8,11 @@ import App from "./App";
 import { ThemeContext, getInitialColorScheme, applyColorScheme, type ColorScheme } from "./theme";
 import "./index.css";
 
+// Vite's `import.meta.env.BASE_URL` is the build-time base (e.g. "/sync/" when
+// embedded inside admin, "/" when standalone). Trim the trailing slash so
+// react-router's `basename` is the canonical "/sync" or "".
+const baseUrl = (import.meta.env.BASE_URL ?? "/").replace(/\/$/, "");
+
 function Root() {
   const [scheme, setScheme] = useState<ColorScheme>(getInitialColorScheme);
 
@@ -19,7 +24,7 @@ function Root() {
   return (
     <ThemeContext.Provider value={{ scheme, setScheme }}>
       <AppProvider i18n={enTranslations}>
-        <BrowserRouter>
+        <BrowserRouter basename={baseUrl || "/"}>
           <App />
         </BrowserRouter>
       </AppProvider>

@@ -146,8 +146,12 @@ export default function Layout() {
       onNavigationDismiss={toggleMobileNav}
       logo={{
         width: 124,
+        // Logo text colour follows the active scheme so it stays legible on the
+        // TopBar in both light and dark mode.
         topBarSource:
-          "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 32'><text x='0' y='22' font-family='Inter,Segoe UI,sans-serif' font-size='18' font-weight='700' fill='%23202223'>Toastd Sync</text></svg>",
+          scheme === "dark"
+            ? "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 32'><text x='0' y='22' font-family='Inter,Segoe UI,sans-serif' font-size='18' font-weight='700' fill='%23e3e3e3'>Toastd Sync</text></svg>"
+            : "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 32'><text x='0' y='22' font-family='Inter,Segoe UI,sans-serif' font-size='18' font-weight='700' fill='%23202223'>Toastd Sync</text></svg>",
         contextualSaveBarSource:
           "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 32'><text x='0' y='22' font-family='Inter,Segoe UI,sans-serif' font-size='18' font-weight='700' fill='%23fff'>Toastd Sync</text></svg>",
         url: "/",
