@@ -1,4 +1,14 @@
-const API_URL = import.meta.env.VITE_SYNC_APP_API || "http://localhost:8787";
+// Normalize the API URL so a missing protocol or stray trailing slash doesn't
+// turn `${API_URL}${path}` into a relative URL that gets glued onto the
+// current page (which produced bugs like /sync/sync.toastd.in/api/...).
+function normalizeApiUrl(raw: string): string {
+  const trimmed = raw.trim().replace(/\/+$/, "");
+  if (!trimmed) return "http://localhost:8787";
+  return /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+}
+const API_URL = normalizeApiUrl(
+  import.meta.env.VITE_SYNC_APP_API || "http://localhost:8787",
+);
 const TOKEN_KEY = "tvs_token";
 
 // When the SPA is mounted under a sub-path (e.g. /sync inside admin),
