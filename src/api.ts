@@ -1,4 +1,4 @@
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8787";
+const API_URL = import.meta.env.VITE_SYNC_APP_API || "http://localhost:8787";
 const TOKEN_KEY = "tvs_token";
 
 // When the SPA is mounted under a sub-path (e.g. /sync inside admin),
