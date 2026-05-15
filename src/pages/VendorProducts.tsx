@@ -451,9 +451,14 @@ export default function VendorProducts() {
                           return <Badge tone={view.tone}>{view.label}</Badge>;
                         })()}
                         {p.lastError && (
-                          <Text as="span" tone="critical" variant="bodySm" truncate>
-                            {p.lastError}
-                          </Text>
+                          // Cap the cell width so a long backend error message
+                          // wraps inside the Pipeline column instead of pushing
+                          // every other column wider.
+                          <Box maxWidth="260px">
+                            <Text as="span" tone="critical" variant="bodySm" breakWord>
+                              {p.lastError}
+                            </Text>
+                          </Box>
                         )}
                       </BlockStack>
                     </IndexTable.Cell>
