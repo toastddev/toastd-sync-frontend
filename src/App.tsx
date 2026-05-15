@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { auth } from "./api";
 import Login from "./pages/Login";
@@ -14,7 +15,24 @@ function RequireAuth({ children }: { children: JSX.Element }) {
   return children;
 }
 
+// Self-heal a `/sync/sync/...` URL produced by the parent admin's reverse
+// proxy double-prefixing the SPA basename. Collapses repeated leading basename
+// segments via history.replaceState so deep-links from outside still work.
+function useDedupBasename() {
+  useEffect(() => {
+    const base = (import.meta.env.BASE_URL ?? "/").replace(/\/$/, "");
+    if (!base || base === "/") return;
+    const dup = `${base}${base}`;
+    const { pathname, search, hash } = window.location;
+    if (pathname === dup || pathname.startsWith(`${dup}/`)) {
+      const fixed = pathname.replace(new RegExp(`^${dup.replace(/\//g, "\\/")}`), base);
+      window.history.replaceState(null, "", `${fixed}${search}${hash}`);
+    }
+  }, []);
+}
+
 export default function App() {
+  useDedupBasename();
   return (
     <Routes>
       <Route path="/login" element={<Login />} />

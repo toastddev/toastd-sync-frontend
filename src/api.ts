@@ -39,7 +39,15 @@ export class ApiError extends Error {
   }
 }
 
-async function request<T = any>(path: string, init: RequestInit = {}): Promise<T> {
+// silent401: clear the token but do NOT do a hard redirect. Used by background
+// pollers (authStatus, syncStatus, logs) so an expired session doesn't bounce
+// the user out of the embed mid-idle — they redirect cleanly on the next
+// user-initiated action instead.
+async function request<T = any>(
+  path: string,
+  init: RequestInit = {},
+  opts: { silent401?: boolean } = {},
+): Promise<T> {
   const headers = new Headers(init.headers);
   if (auth.token) headers.set("Authorization", `Bearer ${auth.token}`);
   if (init.body && !headers.has("Content-Type")) headers.set("Content-Type", "application/json");
@@ -49,7 +57,7 @@ async function request<T = any>(path: string, init: RequestInit = {}): Promise<T
   try { payload = text ? JSON.parse(text) : null; } catch { payload = text; }
   if (res.status === 401 && path !== "/api/auth/login") {
     auth.token = null;
-    location.href = `${BASE_PATH}/login`;
+    if (!opts.silent401) location.href = `${BASE_PATH}/login`;
   }
   if (!res.ok) throw new ApiError(res.status, payload);
   return payload as T;
@@ -60,7 +68,7 @@ export const api = {
 
   getSettings: () => request<any>("/api/settings"),
   putSettings: (s: any) => request<any>("/api/settings", { method: "PUT", body: JSON.stringify(s) }),
-  authStatus: () => request<any>("/api/settings/auth-status"),
+  authStatus: () => request<any>("/api/settings/auth-status", {}, { silent401: true }),
   refreshShipturtleToken: () =>
     request<{ ok: boolean; expiresIn?: number; tokenTail?: string; error?: string }>(
       "/api/settings/shipturtle/refresh",
@@ -109,7 +117,7 @@ export const api = {
         enqueuedAt: number;
       }>;
       queueDepth: number;
-    }>("/api/sync/status"),
+    }>("/api/sync/status", {}, { silent401: true }),
   syncJobs: () => request<any[]>("/api/sync/jobs"),
 
   regressions: () => request<any[]>("/api/products/regressions"),
@@ -121,7 +129,7 @@ export const api = {
     if (params?.limit) u.searchParams.set("limit", String(params.limit));
     if (params?.vendorId) u.searchParams.set("vendorId", params.vendorId);
     if (params?.level) u.searchParams.set("level", params.level);
-    return request<any[]>(`/api/logs?${u.searchParams.toString()}`);
+    return request<any[]>(`/api/logs?${u.searchParams.toString()}`, {}, { silent401: true });
   },
   logStreamUrl: () => `${API_URL}/api/logs/stream`,
   apiUrl: API_URL,

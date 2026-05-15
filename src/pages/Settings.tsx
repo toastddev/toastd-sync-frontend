@@ -131,6 +131,34 @@ export default function Settings() {
     setBusy("refresh");
     setMsg(null);
     try {
+      // Persist any draft credentials first so the backend doesn't error with
+      // "Set client_id and client_secret first" when the user types and clicks
+      // Refresh in one go without hitting Save.
+      const hasDrafts =
+        !!stUsername || !!stPassword || !!stClientId || !!stClientSecret || !!stRefreshToken;
+      if (hasDrafts) {
+        const body: any = {
+          shopifyStoreDomain: shopifyDomain,
+          toastdPublicationNameHint: hint,
+          syncIntervalMinutes: Number(interval) || 30,
+          shipturtleAutoRefreshEnabled: autoRefreshEnabled,
+        };
+        if (shipturtleToken) body.shipturtleToken = shipturtleToken;
+        if (shopifyToken) body.shopifyAdminToken = shopifyToken;
+        if (toastdToken) body.toastdAdminToken = toastdToken;
+        if (stUsername) body.shipturtleUsername = stUsername;
+        if (stPassword) body.shipturtlePassword = stPassword;
+        if (stClientId) body.shipturtleClientId = stClientId;
+        if (stClientSecret) body.shipturtleClientSecret = stClientSecret;
+        if (stRefreshToken) body.shipturtleRefreshToken = stRefreshToken;
+        await api.putSettings(body);
+        setShipTok("");
+        setShopTok("");
+        setToastdTok("");
+        setStPassword("");
+        setStClientSecret("");
+        setStRefreshToken("");
+      }
       const r = await api.refreshShipturtleToken();
       if (r.ok) {
         setMsg({
@@ -147,7 +175,22 @@ export default function Settings() {
     } finally {
       setBusy(null);
     }
-  }, [load, validate]);
+  }, [
+    load,
+    validate,
+    shopifyDomain,
+    hint,
+    interval,
+    autoRefreshEnabled,
+    shipturtleToken,
+    shopifyToken,
+    toastdToken,
+    stUsername,
+    stPassword,
+    stClientId,
+    stClientSecret,
+    stRefreshToken,
+  ]);
 
   if (!s) {
     return (
