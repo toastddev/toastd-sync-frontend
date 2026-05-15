@@ -11,10 +11,15 @@ const API_URL = normalizeApiUrl(
 );
 const TOKEN_KEY = "tvs_token";
 
-// When the SPA is mounted under a sub-path (e.g. /sync inside admin),
-// `import.meta.env.BASE_URL` is "/sync/". Use it as the prefix for full-page
-// redirects so we don't accidentally escape the embed.
-const BASE_PATH = (import.meta.env.BASE_URL ?? "/").replace(/\/$/, "") || "";
+// `auth:changed` fires whenever the token is set or cleared. App.tsx subscribes
+// so that 401-driven token clears trigger a soft React Router navigation via
+// RequireAuth — never a `location.href` jump (which the parent admin's reverse
+// proxy would intercept and bounce us out of the embed).
+function emitAuthChange() {
+  try {
+    window.dispatchEvent(new Event("auth:changed"));
+  } catch {}
+}
 
 export const auth = {
   get token(): string | null {
@@ -23,13 +28,13 @@ export const auth = {
   set token(t: string | null) {
     if (t) localStorage.setItem(TOKEN_KEY, t);
     else localStorage.removeItem(TOKEN_KEY);
+    emitAuthChange();
   },
   get isAuthed() {
     return !!auth.token;
   },
   logout() {
-    auth.token = null;
-    location.href = `${BASE_PATH}/login`;
+    auth.token = null; // emits auth:changed; RequireAuth navigates to /login
   },
 };
 
@@ -55,9 +60,13 @@ async function request<T = any>(
   const text = await res.text();
   let payload: any = null;
   try { payload = text ? JSON.parse(text) : null; } catch { payload = text; }
-  if (res.status === 401 && path !== "/api/auth/login") {
+  if (res.status === 401 && path !== "/api/auth/login" && !opts.silent401) {
+    // Clear the token; the auth:changed event fires and App.tsx re-renders.
+    // RequireAuth then navigates softly via React Router (no `location.href`
+    // jump that the parent admin proxy could intercept and bounce on).
+    // Background pollers pass silent401 so they don't yank the user mid-typing
+    // — the next user-initiated call will hit this branch and navigate cleanly.
     auth.token = null;
-    if (!opts.silent401) location.href = `${BASE_PATH}/login`;
   }
   if (!res.ok) throw new ApiError(res.status, payload);
   return payload as T;
@@ -106,7 +115,10 @@ export const api = {
   runAll: () => request<any>(`/api/sync/run-all`, { method: "POST" }),
   syncStatus: () =>
     request<{
-      current: any | null;
+      current: ({
+        currentStep?: string | null;
+        currentStepProgress?: number | null;
+      } & Record<string, any>) | null;
       queue: Array<{
         vendorId: string;
         vendorShopId: number;

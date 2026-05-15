@@ -29,7 +29,7 @@ export default function Login() {
     try {
       const r = await api.login(pw);
       auth.token = r.token;
-      nav("/", { replace: true });
+      nav("/progress", { replace: true });
     } catch (e: any) {
       setErr(e.message || "login failed");
     } finally {

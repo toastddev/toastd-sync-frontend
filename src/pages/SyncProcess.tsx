@@ -28,6 +28,21 @@ function statusTone(s?: string | null): Tone {
   return undefined;
 }
 
+// Human-readable label for the pipeline step the current product is in.
+// Backend reports just step1/step2/step3 — we expand each one for the UI.
+function stepLabel(step?: string | null): string {
+  switch (step) {
+    case "step1":
+      return "Step 1 of 3 · Pushing to ShipTurtle";
+    case "step2":
+      return "Step 2 of 3 · Publishing to Shopify";
+    case "step3":
+      return "Step 3 of 3 · Creating Toastd record + uploading images";
+    default:
+      return "Starting…";
+  }
+}
+
 export default function SyncProcess() {
   const nav = useNavigate();
   const [settings, setSettings] = useState<any>(null);
@@ -144,10 +159,11 @@ export default function SyncProcess() {
   const enabled = eligible.filter((v) => v.syncEnabled);
 
   const progressPct = job?.total ? Math.round(((job.processed ?? 0) / job.total) * 100) : 0;
+  const stepPct = Math.max(0, Math.min(100, Number(job?.currentStepProgress ?? 0)));
 
   if (!settings) {
     return (
-      <Page title="Sync Process">
+      <Page title="Progress">
         <Box padding="800">
           <InlineStack align="center" blockAlign="center" gap="200">
             <Spinner size="small" />
@@ -162,7 +178,7 @@ export default function SyncProcess() {
 
   return (
     <Page
-      title="Sync Process"
+      title="Progress"
       primaryAction={{
         content: busy === "all" ? "Running…" : "Run all enabled now",
         onAction: runAll,
@@ -233,62 +249,29 @@ export default function SyncProcess() {
                       <Badge tone="critical">{`Fail ${job.failed ?? 0}`}</Badge>
                     </InlineStack>
                     <ProgressBar progress={progressPct} size="small" />
+
+                    {/* Per-product step bar — shows where the currently
+                        running product is inside its 3-step pipeline. */}
+                    <Box paddingBlockStart="200">
+                      <BlockStack gap="100">
+                        <InlineStack gap="200" blockAlign="center">
+                          <Text as="span" tone="subdued" variant="bodySm">
+                            {stepLabel(job.currentStep)}
+                          </Text>
+                          <Text as="span" tone="subdued" variant="bodySm">
+                            {stepPct}%
+                          </Text>
+                        </InlineStack>
+                        <ProgressBar progress={stepPct} size="small" tone="primary" />
+                      </BlockStack>
+                    </Box>
+
                     {job.error && (
                       <Banner tone="critical" title="Job error">
                         <p>{job.error}</p>
                       </Banner>
                     )}
                   </BlockStack>
-                )}
-              </BlockStack>
-            </Card>
-
-            {/* Product queue */}
-            <Card>
-              <BlockStack gap="300">
-                <InlineStack align="space-between" blockAlign="center">
-                  <Text as="h2" variant="headingMd">
-                    Mapping queue ({queueDepth})
-                  </Text>
-                  {queueDepth > 0 && <Badge tone="info">waiting</Badge>}
-                </InlineStack>
-                {queueDepth === 0 ? (
-                  <Text as="p" tone="subdued">
-                    No products waiting. New Map clicks land here and run one at a time.
-                  </Text>
-                ) : (
-                  <IndexTable
-                    resourceName={{ singular: "queued product", plural: "queued products" }}
-                    itemCount={queue.length}
-                    headings={[
-                      { title: "Pos" },
-                      { title: "Product" },
-                      { title: "Vendor" },
-                      { title: "Brand" },
-                      { title: "Waiting" },
-                    ]}
-                    selectable={false}
-                  >
-                    {queue.slice(0, 25).map((q, idx) => (
-                      <IndexTable.Row id={String(q.alienProductId)} key={`${q.vendorShopId}_${q.alienProductId}`} position={idx}>
-                        <IndexTable.Cell>{idx + 1}</IndexTable.Cell>
-                        <IndexTable.Cell>{q.productTitle ?? `#${q.alienProductId}`}</IndexTable.Cell>
-                        <IndexTable.Cell>
-                          <Text as="span" tone="subdued">
-                            {q.vendorName ?? q.vendorShopId}
-                          </Text>
-                        </IndexTable.Cell>
-                        <IndexTable.Cell>
-                          {q.brandName ? <Badge tone="info">{q.brandName}</Badge> : null}
-                        </IndexTable.Cell>
-                        <IndexTable.Cell>
-                          <Text as="span" tone="subdued" variant="bodySm">
-                            {q.enqueuedAt ? `${Math.max(0, Math.round((Date.now() - q.enqueuedAt) / 1000))}s` : ""}
-                          </Text>
-                        </IndexTable.Cell>
-                      </IndexTable.Row>
-                    ))}
-                  </IndexTable>
                 )}
               </BlockStack>
             </Card>
@@ -445,6 +428,58 @@ export default function SyncProcess() {
                               Run now
                             </Button>
                           </Tooltip>
+                        </IndexTable.Cell>
+                      </IndexTable.Row>
+                    ))}
+                  </IndexTable>
+                )}
+              </BlockStack>
+            </Card>
+
+            {/* Mapping queue — pinned to the bottom so the active job and
+                vendor list stay above the fold; queue grows downward as
+                manual Map clicks pile up. */}
+            <Card>
+              <BlockStack gap="300">
+                <InlineStack align="space-between" blockAlign="center">
+                  <Text as="h2" variant="headingMd">
+                    Mapping queue ({queueDepth})
+                  </Text>
+                  {queueDepth > 0 && <Badge tone="info">waiting</Badge>}
+                </InlineStack>
+                {queueDepth === 0 ? (
+                  <Text as="p" tone="subdued">
+                    No products waiting. New Map clicks land here and run one at a time.
+                  </Text>
+                ) : (
+                  <IndexTable
+                    resourceName={{ singular: "queued product", plural: "queued products" }}
+                    itemCount={queue.length}
+                    headings={[
+                      { title: "Pos" },
+                      { title: "Product" },
+                      { title: "Vendor" },
+                      { title: "Brand" },
+                      { title: "Waiting" },
+                    ]}
+                    selectable={false}
+                  >
+                    {queue.slice(0, 25).map((q, idx) => (
+                      <IndexTable.Row id={String(q.alienProductId)} key={`${q.vendorShopId}_${q.alienProductId}`} position={idx}>
+                        <IndexTable.Cell>{idx + 1}</IndexTable.Cell>
+                        <IndexTable.Cell>{q.productTitle ?? `#${q.alienProductId}`}</IndexTable.Cell>
+                        <IndexTable.Cell>
+                          <Text as="span" tone="subdued">
+                            {q.vendorName ?? q.vendorShopId}
+                          </Text>
+                        </IndexTable.Cell>
+                        <IndexTable.Cell>
+                          {q.brandName ? <Badge tone="info">{q.brandName}</Badge> : null}
+                        </IndexTable.Cell>
+                        <IndexTable.Cell>
+                          <Text as="span" tone="subdued" variant="bodySm">
+                            {q.enqueuedAt ? `${Math.max(0, Math.round((Date.now() - q.enqueuedAt) / 1000))}s` : ""}
+                          </Text>
                         </IndexTable.Cell>
                       </IndexTable.Row>
                     ))}

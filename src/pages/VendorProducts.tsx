@@ -429,19 +429,27 @@ export default function VendorProducts() {
                     </IndexTable.Cell>
                     <IndexTable.Cell>
                       <BlockStack gap="050">
-                        <Badge
-                          tone={
-                            p.pipelineStatus === "done"
-                              ? "success"
-                              : p.pipelineStatus === "error"
-                              ? "critical"
-                              : p.pipelineStatus === "running"
-                              ? "info"
-                              : undefined
-                          }
-                        >
-                          {p.pipelineStatus ?? "pending"}
-                        </Badge>
+                        {(() => {
+                          // Map pipelineStatus to a (tone, label) pair. The
+                          // raw enum values are technical — humanize them so
+                          // the dashboard reads naturally for non-engineers.
+                          const status = p.pipelineStatus ?? "pending";
+                          const view: { tone: "success" | "critical" | "info" | "warning" | undefined; label: string } =
+                            status === "done"
+                              ? { tone: "success", label: "done" }
+                              : status === "skipped_existing"
+                              ? { tone: "success", label: "mapped (existing)" }
+                              : status === "website_product_missing"
+                              ? { tone: "critical", label: "website product does not exist" }
+                              : status === "rolled_back"
+                              ? { tone: "warning", label: "rolled back" }
+                              : status === "error"
+                              ? { tone: "critical", label: "error" }
+                              : status === "running"
+                              ? { tone: "info", label: "running" }
+                              : { tone: undefined, label: status };
+                          return <Badge tone={view.tone}>{view.label}</Badge>;
+                        })()}
                         {p.lastError && (
                           <Text as="span" tone="critical" variant="bodySm" truncate>
                             {p.lastError}

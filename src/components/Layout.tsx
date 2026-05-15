@@ -28,7 +28,7 @@ const withBase = (p: string) =>
   p === "/" ? BASE_PATH || "/" : `${BASE_PATH}${p}`;
 
 const navItems = [
-  { url: "/", label: "Sync Process", icon: HomeIcon },
+  { url: "/progress", label: "Progress", icon: HomeIcon },
   { url: "/vendors", label: "Vendors", icon: PersonIcon },
   { url: "/logs", label: "Event Log", icon: ClipboardCheckFilledIcon },
   { url: "/settings", label: "Settings", icon: SettingsIcon },
@@ -94,10 +94,7 @@ export default function Layout() {
           url: withBase(n.url),
           label: n.label,
           icon: n.icon,
-          selected:
-            n.url === "/"
-              ? loc.pathname === "/"
-              : loc.pathname === n.url || loc.pathname.startsWith(n.url + "/"),
+          selected: loc.pathname === n.url || loc.pathname.startsWith(n.url + "/"),
           onClick: (e?: any) => {
             // Polaris fires this for keyboard too; intercept and use react-router
             if (e?.preventDefault) e.preventDefault();

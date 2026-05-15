@@ -1,6 +1,19 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { auth } from "./api";
+
+// Subscribe to `auth:changed` so the entire route tree re-renders when the
+// token is set or cleared. Drives the soft 401 → /login navigation in
+// RequireAuth without ever using `location.href`, which the parent admin's
+// reverse proxy intercepts (and was bouncing the user back to admin home).
+function useAuthSubscription() {
+  const [, tick] = useState(0);
+  useEffect(() => {
+    const onChange = () => tick((t) => t + 1);
+    window.addEventListener("auth:changed", onChange);
+    return () => window.removeEventListener("auth:changed", onChange);
+  }, []);
+}
 import Login from "./pages/Login";
 import Layout from "./components/Layout";
 import SyncProcess from "./pages/SyncProcess";
@@ -33,6 +46,7 @@ function useDedupBasename() {
 
 export default function App() {
   useDedupBasename();
+  useAuthSubscription();
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
@@ -44,13 +58,14 @@ export default function App() {
           </RequireAuth>
         }
       >
-        <Route index element={<SyncProcess />} />
+        <Route index element={<Navigate to="/progress" replace />} />
+        <Route path="progress" element={<SyncProcess />} />
         <Route path="vendors" element={<Vendors />} />
         <Route path="vendors/:id" element={<VendorProducts />} />
         <Route path="settings" element={<Settings />} />
         <Route path="logs" element={<EventLog />} />
       </Route>
-      <Route path="*" element={<Navigate to="/" replace />} />
+      <Route path="*" element={<Navigate to="/progress" replace />} />
     </Routes>
   );
 }
