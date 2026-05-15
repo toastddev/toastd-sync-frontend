@@ -178,7 +178,7 @@ export default function SyncProcess() {
 
   return (
     <Page
-      title="Progress"
+      title="Sync Process"
       primaryAction={{
         content: busy === "all" ? "Running…" : "Run all enabled now",
         onAction: runAll,

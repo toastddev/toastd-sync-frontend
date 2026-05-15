@@ -19,16 +19,13 @@ import {
 import { api, auth } from "../api";
 import { useColorScheme } from "../theme";
 
-// SPA is mounted under a sub-path in production (e.g. "/sync"). React Router
-// strips the basename for internal navigation, but the `<a href>` Polaris
-// generates is a real DOM URL, so it must include the basename — otherwise
-// middle-click / Cmd-click / "copy link" escape the embed.
-const BASE_PATH = (import.meta.env.BASE_URL ?? "/").replace(/\/$/, "");
-const withBase = (p: string) =>
-  p === "/" ? BASE_PATH || "/" : `${BASE_PATH}${p}`;
-
+// Nav URLs are basename-relative (no /sync prefix). Polaris's linkComponent in
+// main.tsx renders these via React Router's <Link>, which both prepends the
+// basename to the rendered href AND intercepts left-clicks via pushState — so
+// tab clicks never trigger a full-page navigation that the parent admin's
+// proxy would bounce to its home.
 const navItems = [
-  { url: "/progress", label: "Progress", icon: HomeIcon },
+  { url: "/progress", label: "Sync Process", icon: HomeIcon },
   { url: "/vendors", label: "Vendors", icon: PersonIcon },
   { url: "/logs", label: "Event Log", icon: ClipboardCheckFilledIcon },
   { url: "/settings", label: "Settings", icon: SettingsIcon },
@@ -88,19 +85,13 @@ export default function Layout() {
     <Navigation location={loc.pathname}>
       <Navigation.Section
         items={navItems.map((n) => ({
-          // href used for middle-click / right-click / copy-link — must include
-          // the basename so it doesn't escape the embed. Left-click is
-          // intercepted below and routed via react-router instead.
-          url: withBase(n.url),
+          url: n.url,
           label: n.label,
           icon: n.icon,
           selected: loc.pathname === n.url || loc.pathname.startsWith(n.url + "/"),
-          onClick: (e?: any) => {
-            // Polaris fires this for keyboard too; intercept and use react-router
-            if (e?.preventDefault) e.preventDefault();
-            nav(n.url);
-            setMobileNavActive(false);
-          },
+          // PolarisLink (main.tsx) handles the actual navigation via React
+          // Router. The onClick here exists only to dismiss the mobile drawer.
+          onClick: () => setMobileNavActive(false),
         }))}
       />
     </Navigation>
@@ -165,7 +156,7 @@ export default function Layout() {
             : "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 32'><text x='0' y='22' font-family='Inter,Segoe UI,sans-serif' font-size='18' font-weight='700' fill='%23202223'>Toastd Sync</text></svg>",
         contextualSaveBarSource:
           "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 32'><text x='0' y='22' font-family='Inter,Segoe UI,sans-serif' font-size='18' font-weight='700' fill='%23fff'>Toastd Sync</text></svg>",
-        url: withBase("/"),
+        url: "/progress",
         accessibilityLabel: "Toastd Sync",
       }}
     >
