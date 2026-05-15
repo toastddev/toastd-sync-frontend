@@ -88,9 +88,28 @@ export const api = {
 
   syncVendor: (id: string) => request<{ jobId: string }>(`/api/sync/vendor/${id}`, { method: "POST" }),
   syncProduct: (vendorId: string, alienProductId: number | string) =>
-    request<{ jobId: string }>(`/api/sync/product/${vendorId}/${alienProductId}`, { method: "POST" }),
+    request<{
+      queued: boolean;
+      running?: boolean;
+      duplicate?: boolean;
+      position: number;
+      queueDepth: number;
+    }>(`/api/sync/product/${vendorId}/${alienProductId}`, { method: "POST" }),
   runAll: () => request<any>(`/api/sync/run-all`, { method: "POST" }),
-  syncStatus: () => request<{ current: any | null }>("/api/sync/status"),
+  syncStatus: () =>
+    request<{
+      current: any | null;
+      queue: Array<{
+        vendorId: string;
+        vendorShopId: number;
+        alienProductId: number;
+        vendorName?: string | null;
+        brandName?: string | null;
+        productTitle?: string | null;
+        enqueuedAt: number;
+      }>;
+      queueDepth: number;
+    }>("/api/sync/status"),
   syncJobs: () => request<any[]>("/api/sync/jobs"),
 
   regressions: () => request<any[]>("/api/products/regressions"),

@@ -33,6 +33,8 @@ export default function SyncProcess() {
   const [settings, setSettings] = useState<any>(null);
   const [vendors, setVendors] = useState<any[]>([]);
   const [job, setJob] = useState<any>(null);
+  const [queue, setQueue] = useState<any[]>([]);
+  const [queueDepth, setQueueDepth] = useState(0);
   const [regressions, setRegressions] = useState<any[]>([]);
   const [busy, setBusy] = useState<string | null>(null);
   const [toast, setToast] = useState<{ tone: Tone; msg: string } | null>(null);
@@ -48,6 +50,8 @@ export default function SyncProcess() {
       setSettings(s);
       setVendors(v);
       setJob(st.current);
+      setQueue(st.queue ?? []);
+      setQueueDepth(st.queueDepth ?? 0);
       setRegressions(r);
     } catch (e: any) {
       setToast({ tone: "critical", msg: e.message });
@@ -60,6 +64,8 @@ export default function SyncProcess() {
       try {
         const st = await api.syncStatus();
         setJob(st.current);
+        setQueue(st.queue ?? []);
+        setQueueDepth(st.queueDepth ?? 0);
       } catch {}
     }, 2000);
     return () => clearInterval(i);
@@ -81,6 +87,13 @@ export default function SyncProcess() {
     [loadAll],
   );
 
+  const humanizeError = (msg: string): string => {
+    if (msg === "queue_not_empty") return "Mapping queue is still draining — wait for queued products to finish before starting a bulk run.";
+    if (msg === "another_job_running") return "A job is already running — wait for it to finish.";
+    if (msg === "queue_full") return "Mapping queue is full. Wait for some items to complete and try again.";
+    return msg;
+  };
+
   const runVendor = useCallback(
     async (v: any) => {
       if (!v.brandId) {
@@ -92,7 +105,7 @@ export default function SyncProcess() {
         await api.syncVendor(v.id);
         loadAll();
       } catch (e: any) {
-        setToast({ tone: "critical", msg: e.message });
+        setToast({ tone: "critical", msg: humanizeError(e.message) });
       } finally {
         setBusy(null);
       }
@@ -106,7 +119,7 @@ export default function SyncProcess() {
       await api.runAll();
       loadAll();
     } catch (e: any) {
-      setToast({ tone: "critical", msg: e.message });
+      setToast({ tone: "critical", msg: humanizeError(e.message) });
     } finally {
       setBusy(null);
     }
@@ -226,6 +239,56 @@ export default function SyncProcess() {
                       </Banner>
                     )}
                   </BlockStack>
+                )}
+              </BlockStack>
+            </Card>
+
+            {/* Product queue */}
+            <Card>
+              <BlockStack gap="300">
+                <InlineStack align="space-between" blockAlign="center">
+                  <Text as="h2" variant="headingMd">
+                    Mapping queue ({queueDepth})
+                  </Text>
+                  {queueDepth > 0 && <Badge tone="info">waiting</Badge>}
+                </InlineStack>
+                {queueDepth === 0 ? (
+                  <Text as="p" tone="subdued">
+                    No products waiting. New Map clicks land here and run one at a time.
+                  </Text>
+                ) : (
+                  <IndexTable
+                    resourceName={{ singular: "queued product", plural: "queued products" }}
+                    itemCount={queue.length}
+                    headings={[
+                      { title: "Pos" },
+                      { title: "Product" },
+                      { title: "Vendor" },
+                      { title: "Brand" },
+                      { title: "Waiting" },
+                    ]}
+                    selectable={false}
+                  >
+                    {queue.slice(0, 25).map((q, idx) => (
+                      <IndexTable.Row id={String(q.alienProductId)} key={`${q.vendorShopId}_${q.alienProductId}`} position={idx}>
+                        <IndexTable.Cell>{idx + 1}</IndexTable.Cell>
+                        <IndexTable.Cell>{q.productTitle ?? `#${q.alienProductId}`}</IndexTable.Cell>
+                        <IndexTable.Cell>
+                          <Text as="span" tone="subdued">
+                            {q.vendorName ?? q.vendorShopId}
+                          </Text>
+                        </IndexTable.Cell>
+                        <IndexTable.Cell>
+                          {q.brandName ? <Badge tone="info">{q.brandName}</Badge> : null}
+                        </IndexTable.Cell>
+                        <IndexTable.Cell>
+                          <Text as="span" tone="subdued" variant="bodySm">
+                            {q.enqueuedAt ? `${Math.max(0, Math.round((Date.now() - q.enqueuedAt) / 1000))}s` : ""}
+                          </Text>
+                        </IndexTable.Cell>
+                      </IndexTable.Row>
+                    ))}
+                  </IndexTable>
                 )}
               </BlockStack>
             </Card>

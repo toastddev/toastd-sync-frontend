@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   Badge,
@@ -39,7 +39,12 @@ export default function VendorProducts() {
   const [productTypeFilter, setProductTypeFilter] = useState("");
   const [tagsFilter, setTagsFilter] = useState("");
   const [loading, setLoading] = useState(true);
-  const [busy, setBusy] = useState<string | null>(null);
+  // Server-confirmed: alienProductIds the backend is running or has queued for this vendor.
+  const [serverActive, setServerActive] = useState<Set<number>>(new Set());
+  // Optimistic: ids we just clicked but haven't yet seen reflected on the server.
+  const [localPending, setLocalPending] = useState<Set<number>>(new Set());
+  const [queueDepth, setQueueDepth] = useState(0);
+  const [currentJob, setCurrentJob] = useState<any | null>(null);
   const [noShopMessage, setNoShopMessage] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
 
@@ -90,6 +95,74 @@ export default function VendorProducts() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
+  const activeIds = useMemo(() => {
+    const s = new Set<number>(serverActive);
+    localPending.forEach((x) => s.add(x));
+    return s;
+  }, [serverActive, localPending]);
+
+  // Latest serverActive snapshot for the polling closure — lets us detect
+  // "just finished" transitions without re-creating the interval on every tick.
+  const prevServerActiveRef = useRef<Set<number>>(new Set());
+  const fetchPageRef = useRef(fetchPage);
+  useEffect(() => { fetchPageRef.current = fetchPage; }, [fetchPage]);
+
+  // Poll sync status every 2 s. Cheap (in-memory on backend) and lets us
+  // reflect queue progress without per-product subscriptions. Always-on while
+  // the page is mounted so a user returning to the tab sees queued items
+  // already in progress from a previous session.
+  useEffect(() => {
+    if (!vendor?.vendorShopId) return;
+    let cancelled = false;
+    const tick = async () => {
+      try {
+        const st = await api.syncStatus();
+        if (cancelled) return;
+        setCurrentJob(st.current);
+        setQueueDepth(st.queueDepth ?? 0);
+        const next = new Set<number>();
+        const cur = st.current;
+        if (
+          cur &&
+          cur.status === "running" &&
+          cur.trigger === "manual_product" &&
+          cur.vendorShopId === vendor.vendorShopId &&
+          typeof cur.alienProductId === "number"
+        ) {
+          next.add(cur.alienProductId);
+        }
+        for (const q of st.queue ?? []) {
+          if (q.vendorShopId === vendor.vendorShopId) next.add(q.alienProductId);
+        }
+        // Items that were active and are no longer → finished. Refetch the
+        // page so the new pipeline status / mapping badge shows up.
+        const prev = prevServerActiveRef.current;
+        let anyFinished = false;
+        for (const id of prev) {
+          if (!next.has(id)) { anyFinished = true; break; }
+        }
+        prevServerActiveRef.current = next;
+        setServerActive(next);
+        // Anything the server now knows about is no longer "local-only".
+        setLocalPending((lp) => {
+          if (lp.size === 0) return lp;
+          let changed = false;
+          const out = new Set(lp);
+          for (const id of next) {
+            if (out.delete(id)) changed = true;
+          }
+          return changed ? out : lp;
+        });
+        if (anyFinished) fetchPageRef.current();
+      } catch {
+        // swallow — UI doesn't need to surface poll errors
+      }
+    };
+    tick();
+    const interval = setInterval(tick, 2000);
+    return () => { cancelled = true; clearInterval(interval); };
+  }, [vendor?.vendorShopId]);
+
   const clearFilters = () => {
     setSearch("");
     setTitleFilter("");
@@ -108,17 +181,31 @@ export default function VendorProducts() {
         setErr("Set a brand mapping for this vendor first.");
         return;
       }
-      setBusy(String(p.alienProductId));
+      const alienId = Number(p.alienProductId);
+      // Already running / queued / mid-click — let the existing slot finish.
+      if (activeIds.has(alienId)) return;
+      // Lock the button synchronously so a double-click can't fire two requests
+      // in the same React tick. The polling effect will move this id from
+      // localPending into serverActive once the server confirms.
+      setLocalPending((lp) => {
+        const next = new Set(lp);
+        next.add(alienId);
+        return next;
+      });
       try {
-        await api.syncProduct(id, p.alienProductId);
-        setTimeout(() => fetchPage(), 1500);
+        await api.syncProduct(id, alienId);
       } catch (e: any) {
-        setErr(e.message);
-      } finally {
-        setBusy(null);
+        // Roll back the optimistic lock so the user can retry.
+        setLocalPending((lp) => {
+          if (!lp.has(alienId)) return lp;
+          const next = new Set(lp);
+          next.delete(alienId);
+          return next;
+        });
+        setErr(e.message ?? "Failed to queue product");
       }
     },
-    [id, vendor, fetchPage],
+    [id, vendor, activeIds],
   );
 
   return (
@@ -145,6 +232,26 @@ export default function VendorProducts() {
         {err && (
           <Banner tone="critical" onDismiss={() => setErr(null)}>
             <p>{err}</p>
+          </Banner>
+        )}
+
+        {(activeIds.size > 0 || queueDepth > 0) && (
+          <Banner tone="info" title={activeIds.size > 0 ? "Mapping in progress" : "Queue has items"}>
+            <BlockStack gap="100">
+              {currentJob?.status === "running" && currentJob.trigger === "manual_product" && (
+                <Text as="p" variant="bodySm">
+                  Now mapping{" "}
+                  <Text as="span" fontWeight="semibold">
+                    {currentJob.currentProductTitle ?? `#${currentJob.alienProductId}`}
+                  </Text>
+                  .
+                </Text>
+              )}
+              <Text as="p" variant="bodySm" tone="subdued">
+                {queueDepth} queued across all vendors · {activeIds.size} for this vendor. Click Map on
+                more products to add them to the queue.
+              </Text>
+            </BlockStack>
           </Banner>
         )}
 
@@ -358,19 +465,32 @@ export default function VendorProducts() {
                     </IndexTable.Cell>
                     <IndexTable.Cell>
                       <BlockStack gap="100">
-                        <Button
-                          size="slim"
-                          onClick={() => mapOne(p)}
-                          loading={busy === String(p.alienProductId)}
-                          disabled={busy === String(p.alienProductId) || !vendor?.brandId || !canMap}
-                        >
-                          Map
-                        </Button>
-                        {!isActive && !alreadyStartedSync && (
-                          <Text as="span" tone="subdued" variant="bodySm">
-                            only active synced
-                          </Text>
-                        )}
+                        {(() => {
+                          const inFlight = activeIds.has(Number(p.alienProductId));
+                          const isCurrent =
+                            currentJob &&
+                            currentJob.status === "running" &&
+                            currentJob.trigger === "manual_product" &&
+                            currentJob.vendorShopId === vendor?.vendorShopId &&
+                            currentJob.alienProductId === Number(p.alienProductId);
+                          return (
+                            <>
+                              <Button
+                                size="slim"
+                                onClick={() => mapOne(p)}
+                                loading={inFlight}
+                                disabled={inFlight || !vendor?.brandId || !canMap}
+                              >
+                                {inFlight ? (isCurrent ? "Mapping…" : "Queued") : "Map"}
+                              </Button>
+                              {!isActive && !alreadyStartedSync && (
+                                <Text as="span" tone="subdued" variant="bodySm">
+                                  only active synced
+                                </Text>
+                              )}
+                            </>
+                          );
+                        })()}
                       </BlockStack>
                     </IndexTable.Cell>
                   </IndexTable.Row>
